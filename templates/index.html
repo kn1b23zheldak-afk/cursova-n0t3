@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="uk" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>n0t3 — Цифрові нотатки</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            apple: {
+              blue: '#0071e3',
+              indigo: '#5856d6',
+              purple: '#af52de',
+              teal: '#30b0c7',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Marked.js for Markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Custom Apple Liquid Glass styles -->
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="h-full flex flex-col transition-colors duration-200">
+
+  <!-- ================= TOP NAVBAR ================= -->
+  <header class="glass-header sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-4">
+        
+        <!-- Logo -->
+        <div class="flex items-center gap-3">
+          <button id="sidebarToggleBtn" class="lg:hidden p-2 rounded-xl text-slate-500 hover:bg-white/20">
+            <i class="fa-solid fa-bars text-base"></i>
+          </button>
+          <div class="flex items-center gap-2.5 cursor-pointer group" onclick="resetAllFilters()">
+            <div class="w-9 h-9 rounded-2xl bg-blue-500/10 dark:bg-blue-400/15 border border-white/60 dark:border-white/15 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform backdrop-blur-md">
+              <i class="fa-solid fa-feather-pointed text-xs"></i>
+            </div>
+            <div class="flex items-center">
+              <span class="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
+                n0t3
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Bar (Live AJAX) -->
+        <div class="flex-1 max-w-lg mx-2">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="fa-solid fa-magnifying-glass text-xs"></i>
+            </div>
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Швидкий пошук нотаток, посилань, тегів..." 
+              class="w-full pl-9 pr-8 py-2 rounded-full text-xs"
+            >
+            <button 
+              id="searchClearBtn" 
+              class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-blue-500 text-xs"
+              title="Очистити пошук"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Action Buttons -->
+        <div class="flex items-center gap-2">
+          <!-- Create Note Button -->
+          <button 
+            id="openCreateModalBtn"
+            class="btn-y2k-primary flex items-center gap-1.5 px-4 py-2 text-xs"
+          >
+            <i class="fa-solid fa-plus text-[10px]"></i>
+            <span>Створити</span>
+          </button>
+
+          <!-- Dark/Light Mode Toggle -->
+          <button 
+            id="themeToggleBtn" 
+            class="btn-y2k-glass p-2.5 text-xs flex items-center justify-center"
+            title="Перемкнути тему"
+          >
+            <i class="fa-solid fa-moon dark:hidden"></i>
+            <i class="fa-solid fa-sun hidden dark:inline"></i>
+          </button>
+
+          <!-- Backup / Export button -->
+          <button 
+            id="exportBtn" 
+            class="btn-y2k-glass hidden md:flex p-2.5 text-xs items-center justify-center"
+            title="Експорт даних (JSON)"
+          >
+            <i class="fa-solid fa-download"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN LAYOUT ================= -->
+  <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 flex gap-5 overflow-hidden">
+    
+    <!-- ================= LEFT SIDEBAR ================= -->
+    <aside 
+      id="sidebar" 
+      class="w-64 flex-shrink-0 flex flex-col gap-4 overflow-y-auto pr-1 hidden lg:flex"
+    >
+      <!-- Quick Navigation -->
+      <div class="glass-panel p-3.5">
+        <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider px-2 mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-compass text-[10px]"></i>
+          <span>Навігація</span>
+        </div>
+        <nav class="space-y-1">
+          <button 
+            data-nav="all" 
+            class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all text-blue-600 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/15 border border-blue-400/25"
+          >
+            <span class="flex items-center gap-2">
+              <i class="fa-solid fa-layer-group text-blue-500"></i>
+              <span>Всі матеріали</span>
+            </span>
+            <span id="countAllNotes" class="badge-y2k bg-blue-500/15 text-blue-700 dark:text-blue-300">0</span>
+          </button>
+
+          <button 
+            data-nav="pinned" 
+            class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+          >
+            <span class="flex items-center gap-2">
+              <i class="fa-solid fa-thumbtack text-amber-500"></i>
+              <span>Закріплені</span>
+            </span>
+            <span id="countPinnedNotes" class="badge-y2k bg-white/40 dark:bg-white/10 text-slate-600 dark:text-slate-400">0</span>
+          </button>
+
+          <button 
+            data-nav="archived" 
+            class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+          >
+            <span class="flex items-center gap-2">
+              <i class="fa-solid fa-box-archive text-slate-400"></i>
+              <span>Архів</span>
+            </span>
+            <span id="countArchivedNotes" class="badge-y2k bg-white/40 dark:bg-white/10 text-slate-600 dark:text-slate-400">0</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Filter by Material Type (Clean 4 types) -->
+      <div class="glass-panel p-3.5">
+        <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider px-2 mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-shapes text-[10px]"></i>
+          <span>Типи матеріалів</span>
+        </div>
+        <div class="space-y-1">
+          <button data-type="" class="type-filter-btn w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors active-type">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-asterisk text-[10px] text-slate-400"></i> Всі типи</span>
+            <span id="typeCount-all" class="text-[10px] text-slate-400 font-medium"></span>
+          </button>
+          <button data-type="text" class="type-filter-btn w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors">
+            <span class="flex items-center gap-2"><i class="fa-regular fa-file-lines text-blue-500"></i> Текст</span>
+            <span id="typeCount-text" class="text-[10px] text-slate-400 font-medium"></span>
+          </button>
+          <button data-type="draw" class="type-filter-btn w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-paintbrush text-indigo-500"></i> Малюнки</span>
+            <span id="typeCount-draw" class="text-[10px] text-slate-400 font-medium"></span>
+          </button>
+          <button data-type="link" class="type-filter-btn w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-link text-purple-500"></i> Посилання</span>
+            <span id="typeCount-link" class="text-[10px] text-slate-400 font-medium"></span>
+          </button>
+          <button data-type="file" class="type-filter-btn w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-paperclip text-amber-500"></i> Файли</span>
+            <span id="typeCount-file" class="text-[10px] text-slate-400 font-medium"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Categories List -->
+      <div class="glass-panel p-3.5">
+        <div class="flex items-center justify-between px-2 mb-2">
+          <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-folder text-[10px]"></i>
+            <span>Категорії</span>
+          </span>
+          <button id="openCategoryModalBtn" class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-gear"></i> Налаштувати
+          </button>
+        </div>
+        <div id="categoryListContainer" class="space-y-1 max-h-44 overflow-y-auto pr-1">
+          <!-- Categories loaded dynamically -->
+        </div>
+      </div>
+
+      <!-- Tags Cloud / Multi-Filter -->
+      <div class="glass-panel p-3.5 flex-1">
+        <div class="flex items-center justify-between px-2 mb-2">
+          <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-tags text-[10px]"></i>
+            <span>Теги</span>
+          </span>
+          <button id="openTagModalBtn" class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-plus"></i> Додати
+          </button>
+        </div>
+        <div id="tagCloudContainer" class="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto p-0.5">
+          <!-- Tags loaded dynamically -->
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ================= MAIN CONTENT AREA ================= -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      
+      <!-- Toolbar: Header, Active Filters, Sorting, View Toggle -->
+      <div class="glass-panel p-4 mb-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          
+          <!-- View Title & Counter -->
+          <div>
+            <h1 id="viewTitle" class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-layer-group text-blue-500"></i>
+              <span>Всі матеріали</span>
+            </h1>
+            <p id="viewSubtitle" class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              Відображається <span id="filteredCount" class="font-semibold text-blue-600 dark:text-blue-400">0</span> матеріалів
+            </p>
+          </div>
+
+          <!-- Controls: Sort & View Toggle -->
+          <div class="flex items-center gap-2">
+            <!-- Sort dropdown -->
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium hidden sm:inline">Сортування:</span>
+              <select 
+                id="sortSelect" 
+                class="text-xs font-medium px-3 py-1.5 rounded-full cursor-pointer"
+              >
+                <option value="updated_at:desc">За оновленням (новіші)</option>
+                <option value="updated_at:asc">За оновленням (старіші)</option>
+                <option value="created_at:desc">За створенням (новіші)</option>
+                <option value="created_at:asc">За створенням (старіші)</option>
+                <option value="title:asc">За назвою (А — Я)</option>
+                <option value="title:desc">За назвою (Я — А)</option>
+              </select>
+            </div>
+
+            <!-- View Mode (Grid / List) -->
+            <div class="flex items-center bg-white/40 dark:bg-black/25 p-1 rounded-full border border-white/40 dark:border-white/10">
+              <button 
+                id="viewGridBtn" 
+                class="p-1.5 px-2.5 rounded-full text-xs font-semibold bg-blue-600 text-white shadow-sm"
+                title="Сітка"
+              >
+                <i class="fa-solid fa-grip"></i>
+              </button>
+              <button 
+                id="viewListBtn" 
+                class="p-1.5 px-2.5 rounded-full text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors"
+                title="Список"
+              >
+                <i class="fa-solid fa-list"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Active Filter Pills Row -->
+        <div id="activeFiltersRow" class="hidden mt-3 pt-3 border-t border-white/30 dark:border-white/10 flex flex-wrap items-center gap-2">
+          <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Фільтри:</span>
+          <div id="filterPillsContainer" class="flex flex-wrap items-center gap-1.5">
+            <!-- Dynamic active filter pills -->
+          </div>
+          <button 
+            id="clearAllFiltersBtn" 
+            class="text-[11px] text-rose-500 hover:text-rose-600 ml-auto font-semibold hover:underline flex items-center gap-1"
+          >
+            <i class="fa-solid fa-rotate-left"></i> Скинути все
+          </button>
+        </div>
+      </div>
+
+      <!-- Notes Grid / List Container -->
+      <div id="notesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <!-- Dynamic Note Cards Injected Here -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden flex-1 flex flex-col items-center justify-center p-12 text-center glass-panel my-auto">
+        <div class="w-16 h-16 rounded-3xl bg-blue-500/10 border border-white/40 flex items-center justify-center text-blue-500 text-2xl mb-3 shadow-sm">
+          <i class="fa-regular fa-folder-open"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">Матеріалів не знайдено</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mb-5 leading-relaxed">
+          Не вдалося знайти нотаток за вказаними фільтрами чи запитом пошуку. Створіть свою першу нотатку!
+        </p>
+        <div class="flex items-center gap-3">
+          <button 
+            onclick="resetAllFilters()" 
+            class="btn-y2k-glass px-4 py-2 text-xs font-semibold"
+          >
+            Скинути фільтри
+          </button>
+          <button 
+            onclick="openCreateModal()" 
+            class="btn-y2k-primary px-5 py-2 text-xs font-semibold"
+          >
+            <i class="fa-solid fa-plus text-[10px] mr-1"></i> Створити нотатку
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- ================= MODAL: CREATE / EDIT NOTE ================= -->
+  <div id="noteModal" class="hidden fixed inset-0 z-50 overflow-y-auto items-center justify-center p-4">
+    <div class="modal-backdrop fixed inset-0" onclick="closeNoteModal()"></div>
+    
+    <div class="modal-content relative max-w-2xl w-full p-6 z-10 my-6 shadow-2xl">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3.5 border-b border-white/30 dark:border-white/10 mb-4">
+        <h2 id="noteModalTitle" class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-blue-500"></i>
+          <span>Створення нотатки</span>
+        </h2>
+        <button onclick="closeNoteModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-white/20 transition-colors">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Form -->
+      <form id="noteForm" class="space-y-4" onsubmit="handleSaveNote(event)">
+        <input type="hidden" id="noteIdInput">
+
+        <!-- Type selector tabs (4 options: Text, Draw, Link, File) -->
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Тип матеріалу</label>
+          <div class="grid grid-cols-4 gap-1.5 p-1.5 bg-white/40 dark:bg-black/25 rounded-2xl border border-white/40 dark:border-white/10">
+            <button type="button" data-modal-type="text" class="modal-type-btn py-1.5 rounded-xl text-xs font-semibold text-center transition-all bg-blue-600 text-white shadow-sm">
+              <i class="fa-regular fa-file-lines block mb-0.5 text-xs"></i> Текст
+            </button>
+            <button type="button" data-modal-type="draw" class="modal-type-btn py-1.5 rounded-xl text-xs font-medium text-center transition-all text-slate-600 dark:text-slate-400 hover:bg-white/30">
+              <i class="fa-solid fa-paintbrush block mb-0.5 text-xs text-indigo-500"></i> Малюнок
+            </button>
+            <button type="button" data-modal-type="link" class="modal-type-btn py-1.5 rounded-xl text-xs font-medium text-center transition-all text-slate-600 dark:text-slate-400 hover:bg-white/30">
+              <i class="fa-solid fa-link block mb-0.5 text-xs text-purple-500"></i> Посилання
+            </button>
+            <button type="button" data-modal-type="file" class="modal-type-btn py-1.5 rounded-xl text-xs font-medium text-center transition-all text-slate-600 dark:text-slate-400 hover:bg-white/30">
+              <i class="fa-solid fa-paperclip block mb-0.5 text-xs text-amber-500"></i> Файл
+            </button>
+          </div>
+          <input type="hidden" id="noteTypeInput" value="text">
+        </div>
+
+        <!-- Title -->
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Назва *</label>
+          <input 
+            type="text" 
+            id="noteTitleInput" 
+            required 
+            placeholder="Введіть заголовок або тему..." 
+            class="w-full px-3.5 py-2 text-xs"
+          >
+        </div>
+
+        <!-- Conditional: Drawing Tool Container -->
+        <div id="drawingInputContainer" class="hidden space-y-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Полотно для малювання</label>
+            
+            <!-- Drawing tools toolbar -->
+            <div class="flex items-center gap-1.5 flex-wrap bg-white/50 dark:bg-black/25 p-1.5 rounded-xl border border-white/40 dark:border-white/10">
+              <!-- Pen / Eraser -->
+              <button type="button" id="toolPenBtn" class="px-2.5 py-1 text-xs font-semibold bg-blue-600 text-white rounded-lg shadow-sm" title="Пензель">
+                <i class="fa-solid fa-pencil"></i>
+              </button>
+              <button type="button" id="toolEraserBtn" class="px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 rounded-lg hover:bg-white/40" title="Гумка (Ластик)">
+                <i class="fa-solid fa-eraser"></i>
+              </button>
+
+              <span class="w-px h-3.5 bg-white/40 mx-0.5"></span>
+
+              <!-- Brush sizes -->
+              <button type="button" data-brush-size="2" class="brush-size-btn px-2 py-0.5 text-[11px] font-semibold rounded-lg border border-blue-400 bg-blue-500/15 text-blue-600 dark:text-blue-300" title="Тонка">2px</button>
+              <button type="button" data-brush-size="5" class="brush-size-btn px-2 py-0.5 text-[11px] font-medium rounded-lg border border-transparent text-slate-600 dark:text-slate-400 hover:bg-white/40" title="Середня">5px</button>
+              <button type="button" data-brush-size="10" class="brush-size-btn px-2 py-0.5 text-[11px] font-medium rounded-lg border border-transparent text-slate-600 dark:text-slate-400 hover:bg-white/40" title="Товста">10px</button>
+
+              <span class="w-px h-3.5 bg-white/40 mx-0.5"></span>
+
+              <!-- Apple refined drawing colors -->
+              <div class="flex items-center gap-1.5" id="canvasColorPicker">
+                <button type="button" data-color="#1d1d1f" class="w-5 h-5 rounded-full bg-slate-900 border-2 border-white ring-2 ring-blue-500 shadow-sm" title="Темний"></button>
+                <button type="button" data-color="#0071e3" class="w-5 h-5 rounded-full bg-blue-600 border border-white shadow-sm" title="Синій"></button>
+                <button type="button" data-color="#ff3b30" class="w-5 h-5 rounded-full bg-red-500 border border-white shadow-sm" title="Червоний"></button>
+                <button type="button" data-color="#34c759" class="w-5 h-5 rounded-full bg-emerald-500 border border-white shadow-sm" title="Зелений"></button>
+                <button type="button" data-color="#af52de" class="w-5 h-5 rounded-full bg-purple-500 border border-white shadow-sm" title="Фіолетовий"></button>
+                <button type="button" data-color="#ff9500" class="w-5 h-5 rounded-full bg-amber-500 border border-white shadow-sm" title="Помаранчевий"></button>
+              </div>
+
+              <span class="w-px h-3.5 bg-white/40 mx-0.5"></span>
+
+              <!-- Clear canvas -->
+              <button type="button" id="clearCanvasBtn" class="px-2 py-1 text-xs text-rose-500 hover:text-rose-700 hover:bg-rose-500/10 rounded-lg" title="Очистити полотно">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Drawing Canvas -->
+          <div class="border border-white/40 dark:border-white/10 bg-white rounded-2xl overflow-hidden relative shadow-inner">
+            <canvas id="sketchCanvas" width="600" height="280" class="w-full h-60 bg-white touch-none cursor-crosshair block"></canvas>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">Малюйте мишкою або пальцем на сенсорному екрані. Скетч збережеться у вашій нотатці.</p>
+        </div>
+
+        <!-- Conditional: Link input -->
+        <div id="linkInputContainer" class="hidden">
+          <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">URL-адреса веб-ресурсу</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-xs">
+              <i class="fa-solid fa-globe"></i>
+            </span>
+            <input 
+              type="url" 
+              id="noteUrlInput" 
+              placeholder="https://example.com/..." 
+              class="w-full pl-9 pr-3.5 py-2 text-xs"
+            >
+          </div>
+        </div>
+
+        <!-- Conditional: File Upload input -->
+        <div id="fileInputContainer" class="hidden">
+          <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Прикріпити файл</label>
+          <div class="border-2 border-dashed border-white/40 dark:border-white/20 rounded-2xl p-5 text-center hover:bg-white/20 dark:hover:bg-white/5 transition-colors">
+            <input type="file" id="noteFileInput" class="hidden" onchange="handleFileSelected(this)">
+            <div id="fileUploadPrompt" onclick="document.getElementById('noteFileInput').click()" class="cursor-pointer">
+              <i class="fa-solid fa-cloud-arrow-up text-2xl text-blue-500 mb-2"></i>
+              <p class="text-xs font-semibold text-slate-800 dark:text-slate-200">Натисніть для вибору файлу</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Зображення, PDF, документи, архіви (до 32 МБ)</p>
+            </div>
+            <div id="fileAttachedInfo" class="hidden flex items-center justify-between bg-blue-500/10 p-2.5 rounded-xl text-left border border-blue-400/25">
+              <div class="flex items-center gap-2 overflow-hidden">
+                <i class="fa-solid fa-file-check text-blue-500 text-lg"></i>
+                <div class="truncate">
+                  <p id="attachedFileName" class="text-xs font-semibold text-blue-700 dark:text-blue-300 truncate"></p>
+                  <p id="attachedFileSize" class="text-[10px] text-slate-500"></p>
+                </div>
+              </div>
+              <button type="button" onclick="removeAttachedFile()" class="text-rose-500 hover:text-rose-700 p-1">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category and Tag Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <!-- Category -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Категорія</label>
+            <select 
+              id="noteCategorySelect" 
+              class="w-full px-3 py-2 text-xs"
+            >
+              <option value="">Без категорії</option>
+            </select>
+          </div>
+
+          <!-- Tags input -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Теги (через кому)</label>
+            <input 
+              type="text" 
+              id="noteTagsInput" 
+              placeholder="курсова, важливо, python" 
+              class="w-full px-3.5 py-2 text-xs"
+            >
+          </div>
+        </div>
+
+        <!-- Content (with Markdown Preview Tab) -->
+        <div id="contentSectionContainer">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Зміст (Markdown підтримується)</label>
+            <div class="flex items-center gap-1 bg-white/40 dark:bg-black/25 p-1 rounded-xl text-xs border border-white/30">
+              <button type="button" id="editorWriteTab" class="px-2.5 py-1 rounded-lg font-semibold bg-blue-600 text-white shadow-sm" onclick="switchEditorTab('write')">
+                Редактор
+              </button>
+              <button type="button" id="editorPreviewTab" class="px-2.5 py-1 rounded-lg font-medium text-slate-500 hover:text-blue-600 transition-colors" onclick="switchEditorTab('preview')">
+                Перегляд
+              </button>
+            </div>
+          </div>
+          <div id="editorWriteContainer">
+            <textarea 
+              id="noteContentInput" 
+              rows="5" 
+              placeholder="Текст нотатки, план або опис..." 
+              class="w-full px-3.5 py-2.5 text-xs font-mono leading-relaxed"
+            ></textarea>
+          </div>
+          <div id="editorPreviewContainer" class="hidden min-h-[120px] max-h-56 overflow-y-auto p-4 rounded-xl border border-white/40 dark:border-white/10 bg-white/50 dark:bg-black/25 markdown-body text-xs backdrop-blur-md">
+            <!-- Preview rendered on the fly -->
+          </div>
+        </div>
+
+        <!-- Bottom Options: Pin & Color Accent -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <!-- Pin checkbox -->
+          <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <input type="checkbox" id="notePinnedInput" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-white/40">
+            <span>Закріпити зверху</span>
+          </label>
+
+          <!-- Color theme palette -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mr-1">Колір:</span>
+            <div class="flex items-center gap-1.5" id="colorPickerContainer">
+              <!-- Colors injected via JS -->
+            </div>
+            <input type="hidden" id="noteColorInput" value="#ffffff">
+          </div>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="flex items-center justify-end gap-2.5 pt-3.5 border-t border-white/30 dark:border-white/10">
+          <button 
+            type="button" 
+            onclick="closeNoteModal()" 
+            class="btn-y2k-glass px-4 py-2 text-xs font-semibold"
+          >
+            Скасувати
+          </button>
+          <button 
+            type="submit" 
+            id="saveNoteBtn" 
+            class="btn-y2k-primary px-5 py-2 text-xs font-semibold flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-check text-[10px]"></i>
+            <span>Зберегти</span>
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: NOTE VIEW / DETAILS ================= -->
+  <div id="viewModal" class="hidden fixed inset-0 z-50 overflow-y-auto items-center justify-center p-4">
+    <div class="modal-backdrop fixed inset-0" onclick="closeViewModal()"></div>
+    
+    <div class="modal-content relative max-w-2xl w-full p-6 z-10 my-6 shadow-2xl">
+      <!-- Header -->
+      <div class="flex items-start justify-between gap-3 pb-3.5 border-b border-white/30 dark:border-white/10">
+        <div>
+          <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+            <span id="viewDetailCategory" class="badge-y2k text-[10px] font-semibold text-white shadow-sm"></span>
+            <span id="viewDetailType" class="badge-y2k text-[10px]"></span>
+            <span id="viewDetailPin" class="hidden text-amber-500 text-xs font-semibold"><i class="fa-solid fa-thumbtack mr-1"></i>Закріплено</span>
+          </div>
+          <h2 id="viewDetailTitle" class="text-lg font-bold text-slate-900 dark:text-white leading-tight"></h2>
+          <p id="viewDetailDates" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1"></p>
+        </div>
+        <button onclick="closeViewModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-white/20 transition-colors">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Detail Body -->
+      <div class="py-4 space-y-4">
+        <!-- Drawing Preview Box if drawing present -->
+        <div id="viewDetailDrawingBox" class="hidden border border-white/40 dark:border-white/10 bg-white/70 dark:bg-black/25 backdrop-blur-md rounded-2xl p-3 space-y-2.5 shadow-inner">
+          <div class="bg-white dark:bg-black/30 rounded-xl border border-white/30 p-2 flex items-center justify-center max-h-80 overflow-hidden">
+            <img id="viewDetailDrawingImg" src="" alt="Малюнок нотатки" class="max-h-72 w-auto object-contain">
+          </div>
+          <div class="flex justify-end">
+            <a id="viewDetailDrawingDownloadBtn" href="#" download="drawing.png" class="btn-y2k-glass px-3.5 py-1.5 text-xs font-semibold flex items-center gap-1.5">
+              <i class="fa-solid fa-download"></i> Завантажити малюнок (PNG)
+            </a>
+          </div>
+        </div>
+
+        <!-- Link Preview if URL present -->
+        <div id="viewDetailLinkBox" class="hidden p-3 rounded-2xl bg-blue-500/10 border border-blue-400/20 flex items-center justify-between backdrop-blur-sm">
+          <div class="flex items-center gap-2 truncate">
+            <i class="fa-solid fa-arrow-up-right-from-square text-blue-600 text-xs"></i>
+            <a id="viewDetailLink" href="#" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-blue-700 dark:text-blue-300 hover:underline truncate"></a>
+          </div>
+          <a id="viewDetailLinkBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn-y2k-primary text-xs px-3.5 py-1.5 flex-shrink-0">Відкрити</a>
+        </div>
+
+        <!-- File Attachment Box if File present -->
+        <div id="viewDetailFileBox" class="hidden p-3 rounded-2xl bg-slate-500/10 border border-white/20 dark:border-white/10 flex items-center justify-between backdrop-blur-sm">
+          <div class="flex items-center gap-2.5 truncate">
+            <div class="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center text-blue-600 text-sm">
+              <i class="fa-solid fa-file-arrow-down"></i>
+            </div>
+            <div class="truncate">
+              <p id="viewDetailFileName" class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate"></p>
+              <p id="viewDetailFileSize" class="text-[10px] text-slate-500"></p>
+            </div>
+          </div>
+          <a id="viewDetailFileDownloadBtn" href="#" download class="btn-y2k-glass px-3.5 py-1.5 text-xs font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-download"></i> Завантажити
+          </a>
+        </div>
+
+        <!-- Rendered Markdown Content -->
+        <div id="viewDetailContent" class="markdown-body text-slate-800 dark:text-slate-100 max-h-80 overflow-y-auto pr-1"></div>
+
+        <!-- Tags List -->
+        <div id="viewDetailTags" class="flex flex-wrap gap-1.5 pt-3 border-t border-white/30 dark:border-white/10"></div>
+      </div>
+
+      <!-- Detail Footer Actions -->
+      <div class="flex items-center justify-between pt-3.5 border-t border-white/30 dark:border-white/10">
+        <div class="flex items-center gap-2">
+          <button id="viewDetailPinBtn" class="btn-y2k-glass px-3 py-1.5 text-xs font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-thumbtack"></i> <span>Закріпити</span>
+          </button>
+          <button id="viewDetailCopyBtn" class="btn-y2k-glass px-3 py-1.5 text-xs font-semibold flex items-center gap-1">
+            <i class="fa-regular fa-copy"></i> Копіювати текст
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="viewDetailDeleteBtn" class="btn-y2k-glass text-rose-500 hover:text-rose-600 px-3 py-1.5 text-xs font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-trash-can"></i> Видалити
+          </button>
+          <button id="viewDetailEditBtn" class="btn-y2k-primary px-4 py-1.5 text-xs font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-pen"></i> Редагувати
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CATEGORY MANAGER ================= -->
+  <div id="categoryModal" class="hidden fixed inset-0 z-50 overflow-y-auto items-center justify-center p-4">
+    <div class="modal-backdrop fixed inset-0" onclick="closeCategoryModal()"></div>
+    
+    <div class="modal-content relative max-w-md w-full p-5 z-10 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-white/30 dark:border-white/10 mb-3.5">
+        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-folder text-blue-500"></i>
+          <span>Керування категоріями</span>
+        </h2>
+        <button onclick="closeCategoryModal()" class="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-white/20">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Add New Category -->
+      <form id="createCategoryForm" onsubmit="handleCreateCategory(event)" class="mb-4 space-y-2.5">
+        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Нова категорія</label>
+        <div class="flex gap-2">
+          <input 
+            type="text" 
+            id="newCategoryName" 
+            required 
+            placeholder="Назва..." 
+            class="flex-1 px-3 py-1.5 text-xs"
+          >
+          <input 
+            type="color" 
+            id="newCategoryColor" 
+            value="#0071e3" 
+            class="w-9 h-9 p-0.5 rounded-xl border border-white/40 bg-transparent cursor-pointer"
+          >
+          <button type="submit" class="btn-y2k-primary px-3.5 py-1.5 text-xs font-semibold">
+            Додати
+          </button>
+        </div>
+      </form>
+
+      <!-- Existing Categories List -->
+      <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Наявні категорії</div>
+      <div id="categoryManageList" class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: TAG MANAGER ================= -->
+  <div id="tagModal" class="hidden fixed inset-0 z-50 overflow-y-auto items-center justify-center p-4">
+    <div class="modal-backdrop fixed inset-0" onclick="closeTagModal()"></div>
+    
+    <div class="modal-content relative max-w-md w-full p-5 z-10 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-white/30 dark:border-white/10 mb-3.5">
+        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-tags text-indigo-500"></i>
+          <span>Керування тегами</span>
+        </h2>
+        <button onclick="closeTagModal()" class="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-white/20">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Add New Tag -->
+      <form id="createTagForm" onsubmit="handleCreateTag(event)" class="mb-4 space-y-2.5">
+        <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Новий тег</label>
+        <div class="flex gap-2">
+          <input 
+            type="text" 
+            id="newTagName" 
+            required 
+            placeholder="Назва тегу..." 
+            class="flex-1 px-3 py-1.5 text-xs"
+          >
+          <input 
+            type="color" 
+            id="newTagColor" 
+            value="#5856d6" 
+            class="w-9 h-9 p-0.5 rounded-xl border border-white/40 bg-transparent cursor-pointer"
+          >
+          <button type="submit" class="btn-y2k-primary px-3.5 py-1.5 text-xs font-semibold">
+            Додати
+          </button>
+        </div>
+      </form>
+
+      <!-- Existing Tags List -->
+      <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Наявні теги</div>
+      <div id="tagManageList" class="flex flex-wrap gap-1.5 max-h-56 overflow-y-auto p-0.5">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications container -->
+  <div id="toast-container"></div>
+
+  <!-- App Script -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

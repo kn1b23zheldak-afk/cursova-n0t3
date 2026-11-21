@@ -1,0 +1,427 @@
+/* =========================================================
+   n0t3 — Apple Liquid Glass Theme
+   Ultra-refined translucent glass, soft liquid reflections,
+   delicate non-saturated tones, macOS / VisionOS inspired.
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Apple System Palette - Soft, refined, desaturated */
+  --apple-blue: #0071e3;
+  --apple-blue-hover: #0077ed;
+  --apple-blue-tint: rgba(0, 113, 227, 0.1);
+  --apple-indigo: #5856d6;
+  --apple-purple: #af52de;
+  --apple-teal: #30b0c7;
+  --apple-mint: #34c759;
+  --apple-coral: #ff6482;
+  --apple-amber: #ff9f0a;
+
+  /* Ambient Canvas Background */
+  --bg-main: #f5f5f7;
+  --bg-gradient: radial-gradient(at 15% 15%, rgba(147, 197, 253, 0.16) 0px, transparent 55%),
+                 radial-gradient(at 85% 12%, rgba(196, 181, 253, 0.14) 0px, transparent 50%),
+                 radial-gradient(at 80% 85%, rgba(167, 243, 208, 0.12) 0px, transparent 50%),
+                 radial-gradient(at 15% 85%, rgba(253, 186, 116, 0.1) 0px, transparent 50%),
+                 linear-gradient(145deg, #fbfbfd 0%, #f2f3f7 50%, #eef1f6 100%);
+
+  /* Liquid Glass Material */
+  --glass-bg: rgba(255, 255, 255, 0.58);
+  --glass-bg-hover: rgba(255, 255, 255, 0.75);
+  --glass-card-bg: rgba(255, 255, 255, 0.52);
+  --glass-border: rgba(255, 255, 255, 0.75);
+  --glass-border-hover: rgba(0, 113, 227, 0.35);
+  --glass-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), inset 0 1px 1px 0 rgba(255, 255, 255, 0.85);
+  --glass-shadow-hover: 0 16px 36px -6px rgba(0, 0, 0, 0.07), inset 0 1px 2px 0 rgba(255, 255, 255, 0.95);
+
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #86868b;
+}
+
+.dark {
+  --apple-blue: #2997ff;
+  --apple-blue-hover: #47a6ff;
+  --apple-blue-tint: rgba(41, 151, 255, 0.14);
+  --apple-indigo: #5e5ce6;
+  --apple-purple: #bf5af2;
+  --apple-teal: #64d2ff;
+  --apple-mint: #30d158;
+  --apple-coral: #ff6482;
+  --apple-amber: #ffd60a;
+
+  /* Ambient Canvas Background (Dark Liquid Obsidian) */
+  --bg-main: #0c0d12;
+  --bg-gradient: radial-gradient(at 15% 15%, rgba(41, 151, 255, 0.12) 0px, transparent 50%),
+                 radial-gradient(at 85% 15%, rgba(191, 90, 242, 0.1) 0px, transparent 50%),
+                 radial-gradient(at 80% 85%, rgba(94, 92, 230, 0.1) 0px, transparent 50%),
+                 radial-gradient(at 15% 85%, rgba(48, 209, 88, 0.08) 0px, transparent 50%),
+                 linear-gradient(145deg, #090a0f 0%, #0e1017 50%, #12141e 100%);
+
+  /* Liquid Glass Material */
+  --glass-bg: rgba(28, 30, 42, 0.52);
+  --glass-bg-hover: rgba(35, 38, 54, 0.7);
+  --glass-card-bg: rgba(24, 26, 38, 0.48);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-hover: rgba(255, 255, 255, 0.25);
+  --glass-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+  --glass-shadow-hover: 0 18px 45px -4px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.22);
+
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --text-tertiary: #6e6e73;
+}
+
+/* Base Body with Smooth Fluid Canvas */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", 'Plus Jakarta Sans', "Helvetica Neue", sans-serif;
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apple Liquid Fluid Orbs (Soft, Ambient, Non-distracting) */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(110px);
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.35;
+  animation: liquidAura 28s infinite alternate ease-in-out;
+}
+
+body::before {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(94, 92, 230, 0.25), transparent 70%);
+  top: -120px;
+  left: -80px;
+}
+
+body::after {
+  width: 540px;
+  height: 540px;
+  background: radial-gradient(circle, rgba(41, 151, 255, 0.22), transparent 70%);
+  bottom: -140px;
+  right: -100px;
+  animation-duration: 32s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes liquidAura {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(50px, 30px) scale(1.08); }
+  100% { transform: translate(-30px, 60px) scale(0.96); }
+}
+
+/* Translucent Liquid Glass Panels */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 1.25rem;
+}
+
+/* Translucent Liquid Glass Header */
+.glass-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
+}
+
+/* Translucent Liquid Glass Card */
+.note-card {
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(24px) saturate(145%);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 1.25rem;
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.note-card:hover {
+  transform: translateY(-2px);
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+/* Apple Liquid Buttons */
+.btn-y2k-primary,
+.btn-apple-primary {
+  background: var(--apple-blue);
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 9999px;
+  box-shadow: 0 3px 12px rgba(0, 113, 227, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-y2k-primary:hover,
+.btn-apple-primary:hover {
+  background: var(--apple-blue-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(0, 113, 227, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+}
+
+.btn-y2k-glass,
+.btn-apple-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.btn-y2k-glass:hover,
+.btn-apple-glass:hover {
+  background: var(--glass-bg-hover);
+  border-color: rgba(0, 113, 227, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Refined Liquid Badges & Pills */
+.badge-y2k,
+.badge-apple {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Custom Scrollbar - Sleek Apple Style */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(140, 140, 150, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 140, 150, 0.5);
+}
+
+/* Highlight search matches */
+mark.search-highlight {
+  background: rgba(255, 214, 10, 0.35);
+  color: var(--text-primary);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Liquid Glass Modals */
+.modal-backdrop {
+  background: rgba(15, 17, 23, 0.45);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: opacity 0.2s ease;
+}
+
+.modal-content {
+  background: var(--glass-bg);
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.25), inset 0 1px 1px 0 rgba(255, 255, 255, 0.85);
+  border-radius: 1.5rem;
+  animation: modalScale 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Inputs & Form Elements */
+input[type="text"],
+input[type="url"],
+input[type="search"],
+select,
+textarea {
+  background: rgba(255, 255, 255, 0.55) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  border-radius: 0.75rem !important;
+  transition: all 0.2s ease;
+}
+
+.dark input[type="text"],
+.dark input[type="url"],
+.dark input[type="search"],
+.dark select,
+.dark textarea {
+  background: rgba(22, 24, 34, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: var(--apple-blue) !important;
+  box-shadow: 0 0 0 3px var(--apple-blue-tint) !important;
+}
+
+/* Tag Pills */
+.tag-pill {
+  transition: all 0.18s ease;
+  border-radius: 9999px !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border) !important;
+}
+
+.tag-pill:hover {
+  transform: translateY(-1px);
+  border-color: var(--apple-blue) !important;
+}
+
+.tag-pill.active {
+  background: var(--apple-blue) !important;
+  color: #ffffff !important;
+  border-color: var(--apple-blue) !important;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.35) !important;
+}
+
+/* Markdown styling inside preview */
+.markdown-body {
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.markdown-body blockquote {
+  border-left: 3px solid var(--apple-blue);
+  background: rgba(0, 113, 227, 0.05);
+  padding: 0.5rem 0.85rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-style: italic;
+  margin: 0.6rem 0;
+}
+
+.markdown-body pre {
+  background: rgba(22, 24, 34, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  color: #64d2ff;
+  padding: 0.85rem;
+  border-radius: 0.85rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.markdown-body code:not(pre code) {
+  background: rgba(0, 113, 227, 0.08);
+  color: var(--apple-blue);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+}
+
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  padding: 0.7rem 1.2rem;
+  border-radius: 9999px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  animation: toastIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Sketch Canvas styles */
+#sketchCanvas {
+  touch-action: none;
+  cursor: crosshair;
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+}
+
+/* Modal Visibility */
+#noteModal.hidden,
+#viewModal.hidden,
+#categoryModal.hidden,
+#tagModal.hidden {
+  display: none !important;
+}
+
+#noteModal:not(.hidden),
+#viewModal:not(.hidden),
+#categoryModal:not(.hidden),
+#tagModal:not(.hidden) {
+  display: flex !important;
+}
